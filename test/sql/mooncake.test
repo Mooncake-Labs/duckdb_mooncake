@@ -1,0 +1,23 @@
+# name: test/sql/mooncake.test
+# description: test mooncake extension
+# group: [sql]
+
+# Before we load the extension, this will fail
+statement error
+SELECT mooncake('Sam');
+----
+Catalog Error: Scalar Function with name mooncake does not exist!
+
+# Require statement will ensure this test is run with this extension loaded
+require mooncake
+
+# Confirm the extension works
+query I
+SELECT mooncake('Sam');
+----
+Mooncake Sam 🐥
+
+query I
+SELECT mooncake_openssl_version('Michael') ILIKE 'Mooncake Michael, my linked OpenSSL version is OpenSSL%';
+----
+true
