@@ -1,0 +1,11 @@
+[package]
+name = "moonlink_ffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+moonlink_rpc.git = "https://github.com/Mooncake-labs/moonlink.git"
+tokio = { version = "1.46", features = ["net"] }

@@ -35,15 +35,19 @@ The main binaries that will be built are:
 ## Running the extension
 To run the extension code, simply start the shell with `./build/release/duckdb`.
 
-Now we can use the features from the extension directly in DuckDB. The template contains a single scalar function `mooncake()` that takes a string arguments and returns a string:
+Now we can use the features from the extension directly in DuckDB:
 ```
-D select mooncake('Jane') as result;
-┌───────────────┐
-│    result     │
-│    varchar    │
-├───────────────┤
-│ Mooncake Jane 🐥 │
-└───────────────┘
+D ATTACH DATABASE 'mooncake' (TYPE mooncake, URI '/var/lib/postgresql/data/pg_mooncake/moonlink.sock');
+D USE mooncake;
+D SELECT * FROM "5.16401";
+┌───────┬─────────┐
+│   a   │    b    │
+│ int32 │ varchar │
+├───────┼─────────┤
+│     1 │ a       │
+│     2 │ b       │
+│     3 │ c       │
+└───────┴─────────┘
 ```
 
 ## Running the tests

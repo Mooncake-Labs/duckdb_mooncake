@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cppdbg",
+            "request": "launch",
+            "name": "Launch DuckDB",
+            "program": "${workspaceFolder}/build/debug/duckdb",
+            "args": ["--unsigned"],
+            "cwd": "${workspaceFolder}",
+            "setupCommands": [
+                {
+                    "text": "-enable-pretty-printing",
+                    "description": "enable pretty printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
