@@ -8,7 +8,7 @@ class DeleteFilter;
 
 class MooncakeTableMetadata {
 public:
-	MooncakeTableMetadata(Moonlink &moonlink, uint32_t database_id, uint32_t table_id);
+	MooncakeTableMetadata(Moonlink &moonlink, const string &schema, const string &table);
 
 	~MooncakeTableMetadata();
 
@@ -30,8 +30,8 @@ private:
 	using PositionDelete = uint32_t[2];
 
 	Moonlink &moonlink;
-	uint32_t database_id;
-	uint32_t table_id;
+	const string &schema;
+	const string &table;
 	DataPtr data;
 
 	uint32_t data_files_len;

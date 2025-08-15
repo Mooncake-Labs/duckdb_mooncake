@@ -21,17 +21,10 @@ optional_ptr<CatalogEntry> MooncakeCatalog::CreateSchema(CatalogTransaction tran
 optional_ptr<SchemaCatalogEntry> MooncakeCatalog::LookupSchema(CatalogTransaction transaction,
                                                                const EntryLookupInfo &schema_lookup,
                                                                OnEntryNotFound if_not_found) {
-	if (schema_lookup.GetEntryName() == "main") {
-		return transaction.transaction->Cast<MooncakeTransaction>().GetSchema();
-	} else if (if_not_found == OnEntryNotFound::THROW_EXCEPTION) {
-		throw CatalogException(schema_lookup.GetErrorContext(), "Schema %s not found", schema_lookup.GetEntryName());
-	} else {
-		return nullptr;
-	}
+	return transaction.transaction->Cast<MooncakeTransaction>().GetOrCreateSchema(schema_lookup.GetEntryName());
 }
 
 void MooncakeCatalog::ScanSchemas(ClientContext &context, std::function<void(SchemaCatalogEntry &)> callback) {
-	throw NotImplementedException("ScanSchemas not implemented");
 }
 
 PhysicalOperator &MooncakeCatalog::PlanCreateTableAs(ClientContext &context, PhysicalPlanGenerator &planner,
