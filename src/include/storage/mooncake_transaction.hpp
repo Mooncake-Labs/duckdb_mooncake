@@ -10,10 +10,13 @@ public:
 
 	~MooncakeTransaction();
 
-	SchemaCatalogEntry &GetSchema();
+	SchemaCatalogEntry &GetOrCreateSchema(const string &name);
 
 private:
-	unique_ptr<SchemaCatalogEntry> schema;
+	Catalog &catalog;
+	uint64_t lsn;
+	mutex lock;
+	case_insensitive_map_t<unique_ptr<SchemaCatalogEntry>> schemas;
 };
 
 } // namespace duckdb

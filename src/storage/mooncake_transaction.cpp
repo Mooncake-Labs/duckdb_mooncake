@@ -2,19 +2,25 @@
 #include "storage/mooncake_schema.hpp"
 #include "storage/mooncake_transaction.hpp"
 
+extern uint64_t XactLastCommitEnd;
+
 namespace duckdb {
 
 MooncakeTransaction::MooncakeTransaction(Catalog &catalog, TransactionManager &manager, ClientContext &context)
-    : Transaction(manager, context) {
-	CreateSchemaInfo info;
-	info.schema = "main";
-	schema = make_uniq<MooncakeSchema>(catalog, info);
+    : Transaction(manager, context), catalog(catalog), lsn(XactLastCommitEnd) {
 }
 
 MooncakeTransaction::~MooncakeTransaction() = default;
 
-SchemaCatalogEntry &MooncakeTransaction::GetSchema() {
-	return *schema;
+SchemaCatalogEntry &MooncakeTransaction::GetOrCreateSchema(const string &name) {
+	lock_guard<mutex> guard(lock);
+	if (auto it = schemas.find(name); it != schemas.end()) {
+		return *it->second.get();
+	}
+	CreateSchemaInfo info;
+	info.schema = name;
+	schemas[name] = make_uniq<MooncakeSchema>(catalog, info, lsn);
+	return *schemas[name];
 }
 
 } // namespace duckdb

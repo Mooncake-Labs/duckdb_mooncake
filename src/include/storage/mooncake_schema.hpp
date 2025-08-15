@@ -9,7 +9,7 @@ class Moonlink;
 
 class MooncakeSchema : public SchemaCatalogEntry {
 public:
-	MooncakeSchema(Catalog &catalog, CreateSchemaInfo &info);
+	MooncakeSchema(Catalog &catalog, CreateSchemaInfo &info, uint64_t lsn);
 
 	~MooncakeSchema();
 
@@ -48,6 +48,7 @@ public:
 	void Alter(CatalogTransaction transaction, AlterInfo &info) override;
 
 private:
+	uint64_t lsn;
 	Moonlink &moonlink;
 	mutex lock;
 	case_insensitive_map_t<unique_ptr<MooncakeTable>> tables;
