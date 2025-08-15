@@ -9,11 +9,11 @@ class Moonlink {
 public:
 	Moonlink(const string &uri);
 
-	DataPtr GetTableSchema(uint32_t database_id, uint32_t table_id);
+	DataPtr GetTableSchema(const string &schema, const string &table);
 
-	DataPtr ScanTableBegin(uint32_t database_id, uint32_t table_id);
+	DataPtr ScanTableBegin(const string &schema, const string &table);
 
-	void ScanTableEnd(uint32_t database_id, uint32_t table_id);
+	void ScanTableEnd(const string &schema, const string &table);
 
 private:
 	mutex lock;

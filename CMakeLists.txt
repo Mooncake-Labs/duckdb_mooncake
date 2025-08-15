@@ -50,7 +50,7 @@ set(EXTENSION_SOURCES
     src/storage/mooncake_transaction.cpp
     src/storage/mooncake_transaction_manager.cpp)
 
-build_static_extension(${TARGET_NAME} ${EXTENSION_SOURCES})
+# build_static_extension(${TARGET_NAME} ${EXTENSION_SOURCES})
 build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
 
 set(LINK_LIBRARIES
@@ -58,11 +58,11 @@ set(LINK_LIBRARIES
     nanoarrow::nanoarrow_ipc
     roaring::roaring)
 
-target_link_libraries(${EXTENSION_NAME} moonlink_ffi-static ${LINK_LIBRARIES})
+# target_link_libraries(${EXTENSION_NAME} moonlink_ffi-static ${LINK_LIBRARIES})
 target_link_libraries(${LOADABLE_EXTENSION_NAME} moonlink_ffi ${LINK_LIBRARIES})
 
-install(
-  TARGETS ${EXTENSION_NAME}
-  EXPORT "${DUCKDB_EXPORT_SET}"
-  LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
+# install(
+#   TARGETS ${EXTENSION_NAME}
+#   EXPORT "${DUCKDB_EXPORT_SET}"
+#   LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+#   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")

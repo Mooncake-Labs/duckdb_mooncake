@@ -1,0 +1,10 @@
+[package]
+name = "moonlink_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+moonlink_rpc.git = "https://github.com/Mooncake-labs/moonlink.git"
+moonlink_service.git = "https://github.com/Mooncake-labs/moonlink.git"
+tokio = "1.46"
+tokio-postgres.git = "https://github.com/Mooncake-labs/rust-postgres.git"

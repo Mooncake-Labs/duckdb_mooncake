@@ -27,8 +27,7 @@ pub struct Void {
 
 #[no_mangle]
 pub extern "C" fn moonlink_connect(uri: *const c_char) -> Result<*mut Stream> {
-    let uri = unsafe { CStr::from_ptr(uri) };
-    let uri = uri.to_str().expect("uri should be convertible to &str");
+    let uri = ptr_to_str(uri);
     block_on(Stream::connect(uri))
         .map(|stream| Box::into_raw(Box::new(stream)))
         .into()
@@ -53,11 +52,13 @@ pub extern "C" fn moonlink_drop_stream(stream: *mut Stream) {
 #[no_mangle]
 pub extern "C" fn moonlink_get_table_schema(
     stream: *mut Stream,
-    database_id: u32,
-    table_id: u32,
+    schema: *const c_char,
+    table: *const c_char,
 ) -> Result<*mut Data> {
     let stream = unsafe { &mut *stream };
-    block_on(get_table_schema(stream, database_id, table_id))
+    let schema = ptr_to_str(schema).to_owned();
+    let table = ptr_to_str(table).to_owned();
+    block_on(get_table_schema(stream, schema, table))
         .map(|schema| Box::into_raw(Box::new(schema.into())))
         .into()
 }
@@ -65,11 +66,13 @@ pub extern "C" fn moonlink_get_table_schema(
 #[no_mangle]
 pub extern "C" fn moonlink_scan_table_begin(
     stream: *mut Stream,
-    database_id: u32,
-    table_id: u32,
+    schema: *const c_char,
+    table: *const c_char,
 ) -> Result<*mut Data> {
     let stream = unsafe { &mut *stream };
-    block_on(scan_table_begin(stream, database_id, table_id, 0))
+    let schema = ptr_to_str(schema).to_owned();
+    let table = ptr_to_str(table).to_owned();
+    block_on(scan_table_begin(stream, schema, table, 0))
         .map(|metadata| Box::into_raw(Box::new(metadata.into())))
         .into()
 }
@@ -77,13 +80,20 @@ pub extern "C" fn moonlink_scan_table_begin(
 #[no_mangle]
 pub extern "C" fn moonlink_scan_table_end(
     stream: *mut Stream,
-    database_id: u32,
-    table_id: u32,
+    schema: *const c_char,
+    table: *const c_char,
 ) -> Result<Void> {
     let stream = unsafe { &mut *stream };
-    block_on(scan_table_end(stream, database_id, table_id))
+    let schema = ptr_to_str(schema).to_owned();
+    let table = ptr_to_str(table).to_owned();
+    block_on(scan_table_end(stream, schema, table))
         .map(|unit| unit.into())
         .into()
+}
+
+fn ptr_to_str(ptr: *const c_char) -> &'static str {
+    let cstr = unsafe { CStr::from_ptr(ptr) };
+    cstr.to_str().expect("uri should be convertible to &str")
 }
 
 fn block_on<F: Future>(future: F) -> F::Output {
