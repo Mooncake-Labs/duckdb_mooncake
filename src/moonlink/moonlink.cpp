@@ -2,23 +2,24 @@
 
 namespace duckdb {
 
-Moonlink::Moonlink(const string &uri) {
+Moonlink::Moonlink(string uri, string database) : database(database) {
 	stream = StreamPtr(moonlink_connect(uri.c_str()).Unwrap());
 }
 
-DataPtr Moonlink::GetTableSchema(uint32_t database_id, uint32_t table_id) {
+DataPtr Moonlink::GetTableSchema(const string &schema, const string &table) {
 	lock_guard<mutex> guard(lock);
-	return DataPtr(moonlink_get_table_schema(stream.get(), database_id, table_id).Unwrap());
+	return DataPtr(moonlink_get_table_schema(stream.get(), database.c_str(), schema.c_str(), table.c_str()).Unwrap());
 }
 
-DataPtr Moonlink::ScanTableBegin(uint32_t database_id, uint32_t table_id) {
+DataPtr Moonlink::ScanTableBegin(const string &schema, const string &table) {
 	lock_guard<mutex> guard(lock);
-	return DataPtr(moonlink_scan_table_begin(stream.get(), database_id, table_id).Unwrap());
+	return DataPtr(
+	    moonlink_scan_table_begin(stream.get(), database.c_str(), schema.c_str(), table.c_str(), 0).Unwrap());
 }
 
-void Moonlink::ScanTableEnd(uint32_t database_id, uint32_t table_id) {
+void Moonlink::ScanTableEnd(const string &schema, const string &table) {
 	lock_guard<mutex> guard(lock);
-	moonlink_scan_table_end(stream.get(), database_id, table_id).Unwrap(false /*throw_err*/);
+	moonlink_scan_table_end(stream.get(), database.c_str(), schema.c_str(), table.c_str()).Unwrap(false /*throw_err*/);
 }
 
 } // namespace duckdb

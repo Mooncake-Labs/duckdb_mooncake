@@ -8,4 +8,4 @@ crate-type = ["staticlib"]
 
 [dependencies]
 moonlink_rpc.git = "https://github.com/Mooncake-labs/moonlink.git"
-tokio = { version = "1.46", features = ["net"] }
+tokio = { version = "1.47", features = ["net"] }

@@ -1,4 +1,3 @@
-#include "duckdb/common/re2_regex.hpp"
 #include "duckdb/function/table/arrow.hpp"
 #include "duckdb/main/database.hpp"
 #include "duckdb/parser/parsed_data/create_table_info.hpp"
@@ -72,28 +71,12 @@ optional_ptr<CatalogEntry> MooncakeSchema::CreateType(CatalogTransaction transac
 optional_ptr<CatalogEntry> MooncakeSchema::LookupEntry(CatalogTransaction transaction,
                                                        const EntryLookupInfo &lookup_info) {
 	lock_guard<mutex> guard(lock);
-	auto entry = tables.find(lookup_info.GetEntryName());
-	if (entry != tables.end()) {
-		return entry->second.get();
+	auto &table_name = lookup_info.GetEntryName();
+	if (auto it = tables.find(table_name); it != tables.end()) {
+		return *it->second.get();
 	}
 
-	duckdb_re2::Match match;
-	duckdb_re2::Regex regex(R"((\d+)\.(\d+))");
-	if (!RegexMatch(lookup_info.GetEntryName(), match, regex)) {
-		throw CatalogException(lookup_info.GetErrorContext(), "Table %s not found", lookup_info.GetEntryName());
-	}
-	unsigned long id = std::stoul(match[1].str());
-	if (id > std::numeric_limits<uint32_t>::max()) {
-		throw CatalogException(lookup_info.GetErrorContext(), "Table %s not found", lookup_info.GetEntryName());
-	}
-	uint32_t database_id = static_cast<uint32_t>(id);
-	id = std::stoul(match[2].str());
-	if (id > std::numeric_limits<uint32_t>::max()) {
-		throw CatalogException(lookup_info.GetErrorContext(), "Table %s not found", lookup_info.GetEntryName());
-	}
-	uint32_t table_id = static_cast<uint32_t>(id);
-	DataPtr data = moonlink.GetTableSchema(database_id, table_id);
-
+	DataPtr data = moonlink.GetTableSchema(name, table_name);
 	nanoarrow::ipc::UniqueDecoder decoder;
 	ArrowSchemaWrapper schema;
 	ArrowError error;
@@ -109,14 +92,12 @@ optional_ptr<CatalogEntry> MooncakeSchema::LookupEntry(CatalogTransaction transa
 	ArrowTableFunction::PopulateArrowTableType(transaction.db->config, arrow_table, schema, names, return_types);
 
 	CreateTableInfo table_info;
-	table_info.table = lookup_info.GetEntryName();
+	table_info.table = table_name;
 	for (idx_t i = 0; i < names.size(); i++) {
 		table_info.columns.AddColumn(ColumnDefinition(names[i], return_types[i]));
 	}
-	auto table = make_uniq<MooncakeTable>(catalog, *this, table_info, moonlink, database_id, table_id);
-	auto &result = *table;
-	tables.emplace(lookup_info.GetEntryName(), std::move(table));
-	return result;
+	tables[table_name] = make_uniq<MooncakeTable>(catalog, *this, table_info, moonlink);
+	return *tables[table_name];
 }
 
 void MooncakeSchema::DropEntry(ClientContext &context, DropInfo &info) {

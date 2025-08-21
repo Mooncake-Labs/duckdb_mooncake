@@ -32,7 +32,7 @@ struct Result {
 	};
 };
 
-using Stream = void;
+struct Stream;
 
 struct Void {
 	uint8_t _void;
@@ -46,13 +46,14 @@ extern "C" void moonlink_drop_data(Data *data);
 
 extern "C" void moonlink_drop_stream(Stream *stream);
 
-extern "C" [[nodiscard]] Result<Data *> moonlink_get_table_schema(Stream *stream, uint32_t database_id,
-                                                                  uint32_t table_id);
+extern "C" [[nodiscard]] Result<Data *> moonlink_get_table_schema(Stream *stream, const char *database,
+                                                                  const char *schema, const char *table);
 
-extern "C" [[nodiscard]] Result<Data *> moonlink_scan_table_begin(Stream *stream, uint32_t database_id,
-                                                                  uint32_t table_id);
+extern "C" [[nodiscard]] Result<Data *> moonlink_scan_table_begin(Stream *stream, const char *database,
+                                                                  const char *schema, const char *table, uint64_t lsn);
 
-extern "C" [[nodiscard]] Result<Void> moonlink_scan_table_end(Stream *stream, uint32_t database_id, uint32_t table_id);
+extern "C" [[nodiscard]] Result<Void> moonlink_scan_table_end(Stream *stream, const char *database, const char *schema,
+                                                              const char *table);
 
 template <auto fn>
 struct Deleter {

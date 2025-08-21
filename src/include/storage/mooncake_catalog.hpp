@@ -8,7 +8,7 @@ class Moonlink;
 
 class MooncakeCatalog : public Catalog {
 public:
-	MooncakeCatalog(AttachedDatabase &db, string uri);
+	MooncakeCatalog(AttachedDatabase &db, string uri, string database);
 
 	~MooncakeCatalog();
 

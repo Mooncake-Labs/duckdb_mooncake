@@ -5,7 +5,7 @@
     "features": {
         "ghcr.io/devcontainers/features/docker-in-docker:2": {}
     },
-    "postStartCommand": "git config devcontainers-theme.show-dirty 1",
+    "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
     "customizations": {
         "vscode": {
             "extensions": [

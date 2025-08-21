@@ -8,9 +8,9 @@ using roaring::Roaring;
 
 namespace duckdb {
 
-MooncakeTableMetadata::MooncakeTableMetadata(Moonlink &moonlink, uint32_t database_id, uint32_t table_id)
-    : moonlink(moonlink), database_id(database_id), table_id(table_id) {
-	data = moonlink.ScanTableBegin(database_id, table_id);
+MooncakeTableMetadata::MooncakeTableMetadata(Moonlink &moonlink, const string &schema, const string &table)
+    : moonlink(moonlink), schema(schema), table(table) {
+	data = moonlink.ScanTableBegin(schema, table);
 	uint32_t *ptr = reinterpret_cast<uint32_t *>(data->ptr);
 
 	data_files_len = *ptr++;
@@ -38,7 +38,7 @@ MooncakeTableMetadata::MooncakeTableMetadata(Moonlink &moonlink, uint32_t databa
 }
 
 MooncakeTableMetadata::~MooncakeTableMetadata() {
-	moonlink.ScanTableEnd(database_id, table_id);
+	moonlink.ScanTableEnd(schema, table);
 }
 
 class MooncakeDeleteFilter : public DeleteFilter {

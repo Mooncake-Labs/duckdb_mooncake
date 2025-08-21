@@ -1,12 +1,12 @@
+#include "duckdb/catalog/catalog_entry/schema_catalog_entry.hpp"
 #include "duckdb/storage/table_storage_info.hpp"
 #include "storage/mooncake_table.hpp"
 #include "storage/mooncake_table_metadata.hpp"
 
 namespace duckdb {
 
-MooncakeTable::MooncakeTable(Catalog &catalog, SchemaCatalogEntry &schema, CreateTableInfo &info, Moonlink &moonlink,
-                             uint32_t database_id, uint32_t table_id)
-    : TableCatalogEntry(catalog, schema, info), moonlink(moonlink), database_id(database_id), table_id(table_id) {
+MooncakeTable::MooncakeTable(Catalog &catalog, SchemaCatalogEntry &schema, CreateTableInfo &info, Moonlink &moonlink)
+    : TableCatalogEntry(catalog, schema, info), moonlink(moonlink) {
 }
 
 MooncakeTable::~MooncakeTable() = default;
@@ -22,7 +22,7 @@ TableStorageInfo MooncakeTable::GetStorageInfo(ClientContext &context) {
 MooncakeTableMetadata &MooncakeTable::GetTableMetadata() {
 	lock_guard<mutex> guard(lock);
 	if (!metadata) {
-		metadata = make_uniq<MooncakeTableMetadata>(moonlink, database_id, table_id);
+		metadata = make_uniq<MooncakeTableMetadata>(moonlink, schema.name, name);
 	}
 	return *metadata;
 }
