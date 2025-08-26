@@ -13,7 +13,8 @@ DataPtr Moonlink::GetTableSchema(const string &schema, const string &table) {
 
 DataPtr Moonlink::ScanTableBegin(const string &schema, const string &table) {
 	lock_guard<mutex> guard(lock);
-	return DataPtr(moonlink_scan_table_begin(stream.get(), database.c_str(), schema.c_str(), table.c_str(), 0).Unwrap());
+	return DataPtr(
+	    moonlink_scan_table_begin(stream.get(), database.c_str(), schema.c_str(), table.c_str(), 0).Unwrap());
 }
 
 void Moonlink::ScanTableEnd(const string &schema, const string &table) {

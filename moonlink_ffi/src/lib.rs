@@ -70,7 +70,7 @@ pub extern "C" fn moonlink_scan_table_begin(
     database: *const c_char,
     schema: *const c_char,
     table: *const c_char,
-    lsn: u64
+    lsn: u64,
 ) -> Result<*mut Data> {
     let stream = unsafe { &mut *stream };
     let database = ptr_to_str(database).to_owned();

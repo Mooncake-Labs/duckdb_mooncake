@@ -6,7 +6,8 @@
 namespace duckdb {
 
 MooncakeCatalog::MooncakeCatalog(AttachedDatabase &db, string uri, string database)
-    : Catalog(db), uri(uri), moonlink(make_uniq<Moonlink>(std::move(uri), std::move(database))) {}
+    : Catalog(db), uri(uri), moonlink(make_uniq<Moonlink>(std::move(uri), std::move(database))) {
+}
 
 MooncakeCatalog::~MooncakeCatalog() = default;
 
