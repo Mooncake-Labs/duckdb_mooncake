@@ -8,7 +8,7 @@ class DeleteFilter;
 
 class MooncakeTableMetadata {
 public:
-	MooncakeTableMetadata(Moonlink &moonlink, const string &schema, const string &table);
+	MooncakeTableMetadata(Moonlink &moonlink, const string &schema, const string &table, uint64_t lsn);
 
 	~MooncakeTableMetadata();
 

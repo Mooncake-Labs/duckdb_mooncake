@@ -5,8 +5,9 @@
 
 namespace duckdb {
 
-MooncakeTable::MooncakeTable(Catalog &catalog, SchemaCatalogEntry &schema, CreateTableInfo &info, Moonlink &moonlink)
-    : TableCatalogEntry(catalog, schema, info), moonlink(moonlink) {
+MooncakeTable::MooncakeTable(Catalog &catalog, SchemaCatalogEntry &schema, CreateTableInfo &info, uint64_t lsn,
+                             Moonlink &moonlink)
+    : TableCatalogEntry(catalog, schema, info), lsn(lsn), moonlink(moonlink) {
 }
 
 MooncakeTable::~MooncakeTable() = default;
@@ -22,7 +23,7 @@ TableStorageInfo MooncakeTable::GetStorageInfo(ClientContext &context) {
 MooncakeTableMetadata &MooncakeTable::GetTableMetadata() {
 	lock_guard<mutex> guard(lock);
 	if (!metadata) {
-		metadata = make_uniq<MooncakeTableMetadata>(moonlink, schema.name, name);
+		metadata = make_uniq<MooncakeTableMetadata>(moonlink, schema.name, name, lsn);
 	}
 	return *metadata;
 }

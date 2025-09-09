@@ -9,7 +9,8 @@ class Moonlink;
 
 class MooncakeTable : public TableCatalogEntry {
 public:
-	MooncakeTable(Catalog &catalog, SchemaCatalogEntry &schema, CreateTableInfo &info, Moonlink &moonlink);
+	MooncakeTable(Catalog &catalog, SchemaCatalogEntry &schema, CreateTableInfo &info, uint64_t lsn,
+	              Moonlink &moonlink);
 
 	~MooncakeTable();
 
@@ -22,6 +23,7 @@ public:
 	MooncakeTableMetadata &GetTableMetadata();
 
 private:
+	uint64_t lsn;
 	Moonlink &moonlink;
 	mutex lock;
 	unique_ptr<MooncakeTableMetadata> metadata;

@@ -14,6 +14,7 @@ public:
 
 private:
 	Catalog &catalog;
+	uint64_t lsn;
 	mutex lock;
 	case_insensitive_map_t<unique_ptr<SchemaCatalogEntry>> schemas;
 };

@@ -9,8 +9,8 @@
 
 namespace duckdb {
 
-MooncakeSchema::MooncakeSchema(Catalog &catalog, CreateSchemaInfo &info)
-    : SchemaCatalogEntry(catalog, info), moonlink(catalog.Cast<MooncakeCatalog>().GetMoonlink()) {
+MooncakeSchema::MooncakeSchema(Catalog &catalog, CreateSchemaInfo &info, uint64_t lsn)
+    : SchemaCatalogEntry(catalog, info), lsn(lsn), moonlink(catalog.Cast<MooncakeCatalog>().GetMoonlink()) {
 }
 
 MooncakeSchema::~MooncakeSchema() = default;
@@ -96,7 +96,7 @@ optional_ptr<CatalogEntry> MooncakeSchema::LookupEntry(CatalogTransaction transa
 	for (idx_t i = 0; i < names.size(); i++) {
 		table_info.columns.AddColumn(ColumnDefinition(names[i], return_types[i]));
 	}
-	tables[table_name] = make_uniq<MooncakeTable>(catalog, *this, table_info, moonlink);
+	tables[table_name] = make_uniq<MooncakeTable>(catalog, *this, table_info, lsn, moonlink);
 	return *tables[table_name];
 }
 

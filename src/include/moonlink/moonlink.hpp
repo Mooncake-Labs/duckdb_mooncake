@@ -11,7 +11,7 @@ public:
 
 	DataPtr GetTableSchema(const string &schema, const string &table);
 
-	DataPtr ScanTableBegin(const string &schema, const string &table);
+	DataPtr ScanTableBegin(const string &schema, const string &table, uint64_t lsn);
 
 	void ScanTableEnd(const string &schema, const string &table);
 

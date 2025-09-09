@@ -11,10 +11,10 @@ DataPtr Moonlink::GetTableSchema(const string &schema, const string &table) {
 	return DataPtr(moonlink_get_table_schema(stream.get(), database.c_str(), schema.c_str(), table.c_str()).Unwrap());
 }
 
-DataPtr Moonlink::ScanTableBegin(const string &schema, const string &table) {
+DataPtr Moonlink::ScanTableBegin(const string &schema, const string &table, uint64_t lsn) {
 	lock_guard<mutex> guard(lock);
 	return DataPtr(
-	    moonlink_scan_table_begin(stream.get(), database.c_str(), schema.c_str(), table.c_str(), 0).Unwrap());
+	    moonlink_scan_table_begin(stream.get(), database.c_str(), schema.c_str(), table.c_str(), lsn).Unwrap());
 }
 
 void Moonlink::ScanTableEnd(const string &schema, const string &table) {

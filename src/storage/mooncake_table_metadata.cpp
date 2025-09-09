@@ -8,9 +8,10 @@ using roaring::Roaring;
 
 namespace duckdb {
 
-MooncakeTableMetadata::MooncakeTableMetadata(Moonlink &moonlink, const string &schema, const string &table)
+MooncakeTableMetadata::MooncakeTableMetadata(Moonlink &moonlink, const string &schema, const string &table,
+                                             uint64_t lsn)
     : moonlink(moonlink), schema(schema), table(table) {
-	data = moonlink.ScanTableBegin(schema, table);
+	data = moonlink.ScanTableBegin(schema, table, lsn);
 	uint32_t *ptr = reinterpret_cast<uint32_t *>(data->ptr);
 
 	data_files_len = *ptr++;
