@@ -6,7 +6,7 @@ namespace duckdb {
 
 class MooncakeExtension : public Extension {
 public:
-	void Load(DuckDB &db) override;
+	void Load(ExtensionLoader &loader) override;
 
 	string Name() override;
 

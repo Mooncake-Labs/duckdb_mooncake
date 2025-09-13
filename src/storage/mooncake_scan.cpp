@@ -1,6 +1,5 @@
 #include "duckdb/catalog/catalog_entry/table_function_catalog_entry.hpp"
 #include "duckdb/common/multi_file/multi_file_reader.hpp"
-#include "duckdb/main/extension_util.hpp"
 #include "duckdb/parser/tableref/table_function_ref.hpp"
 #include "parquet_reader.hpp"
 #include "storage/mooncake_table.hpp"
@@ -106,7 +105,7 @@ struct MooncakeMultiFileReader : public MultiFileReader {
 		return make_uniq<MooncakeMultiFileReader>(table_function.function_info->Cast<MooncakeFunctionInfo>().table);
 	}
 
-	shared_ptr<MultiFileList> CreateFileList(ClientContext &, const vector<string> &, FileGlobOptions) override {
+	shared_ptr<MultiFileList> CreateFileList(ClientContext &, const vector<string> &, const FileGlobInput &) override {
 		return make_shared_ptr<MooncakeMultiFileList>(table);
 	}
 
@@ -135,7 +134,8 @@ struct MooncakeMultiFileReader : public MultiFileReader {
 };
 
 static TableFunction &GetParquetScan(ClientContext &context) {
-	return ExtensionUtil::GetTableFunction(*context.db, "parquet_scan").functions.GetFunctionReferenceByOffset(0);
+	ExtensionLoader loader(*context.db, "mooncake");
+	return loader.GetTableFunction("parquet_scan").functions.GetFunctionReferenceByOffset(0);
 }
 
 static unique_ptr<GlobalTableFunctionState> MooncakeScanInitGlobal(ClientContext &context,

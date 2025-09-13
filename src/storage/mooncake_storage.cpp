@@ -4,8 +4,8 @@
 
 namespace duckdb {
 
-unique_ptr<Catalog> MooncakeAttach(StorageExtensionInfo *storage_info, ClientContext &context, AttachedDatabase &db,
-                                   const string &name, AttachInfo &info, AccessMode access_mode) {
+unique_ptr<Catalog> MooncakeAttach(optional_ptr<StorageExtensionInfo> storage_info, ClientContext &context,
+                                   AttachedDatabase &db, const string &name, AttachInfo &info, AttachOptions &options) {
 	string uri;
 	string database;
 	for (auto &entry : info.options) {
@@ -29,7 +29,7 @@ unique_ptr<Catalog> MooncakeAttach(StorageExtensionInfo *storage_info, ClientCon
 	return make_uniq<MooncakeCatalog>(db, std::move(uri), std::move(database));
 }
 
-unique_ptr<TransactionManager> MooncakeCreateTransactionManager(StorageExtensionInfo *storage_info,
+unique_ptr<TransactionManager> MooncakeCreateTransactionManager(optional_ptr<StorageExtensionInfo> storage_info,
                                                                 AttachedDatabase &db, Catalog &catalog) {
 	return make_uniq<MooncakeTransactionManager>(db, catalog);
 }
