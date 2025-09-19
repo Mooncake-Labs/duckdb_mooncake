@@ -1,4 +1,6 @@
 # duckdb_mooncake
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMooncake-Labs%2Fduckdb_mooncake.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FMooncake-Labs%2Fduckdb_mooncake?ref=badge_shield)
+
 
 duckdb_mooncake is a DuckDB extension to read Iceberg tables written by [moonlink][moonlink-link] in real time.
 
@@ -40,3 +42,7 @@ To run, run the bundled `duckdb` shell:
 ```
 
 [moonlink-link]: https://github.com/Mooncake-Labs/moonlink
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMooncake-Labs%2Fduckdb_mooncake.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FMooncake-Labs%2Fduckdb_mooncake?ref=badge_large)
