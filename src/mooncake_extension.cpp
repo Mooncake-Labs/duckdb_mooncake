@@ -26,7 +26,11 @@ string MooncakeExtension::Name() {
 }
 
 string MooncakeExtension::Version() const {
+#ifdef EXT_VERSION_MOONCAKE
 	return EXT_VERSION_MOONCAKE;
+#else
+	return "";
+#endif
 }
 
 } // namespace duckdb

@@ -24,7 +24,8 @@ TableStorageInfo MooncakeTable::GetStorageInfo(ClientContext &context) {
 MooncakeTableMetadata &MooncakeTable::GetTableMetadata() {
 	lock_guard<mutex> guard(lock);
 	if (!metadata) {
-		metadata = make_uniq<MooncakeTableMetadata>(moonlink, schema.name.GetIdentifierName(), name.GetIdentifierName(), lsn);
+		metadata =
+		    make_uniq<MooncakeTableMetadata>(moonlink, schema.name.GetIdentifierName(), name.GetIdentifierName(), lsn);
 	}
 	return *metadata;
 }

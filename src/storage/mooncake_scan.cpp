@@ -16,7 +16,8 @@ struct DataFileStatistics : public ObjectCacheEntry {
 public:
 	DataFileStatistics(ClientContext &context, const string &data_file, const MultiFileBindData &bind_data) {
 		auto options = bind_data.interface->InitializeOptions(context, nullptr);
-		auto reader = bind_data.interface->CreateReader(context, OpenFileInfo(data_file), *options, bind_data.file_options);
+		auto reader =
+		    bind_data.interface->CreateReader(context, OpenFileInfo(data_file), *options, bind_data.file_options);
 		for (auto &name : bind_data.names) {
 			column_stats[name] = reader->GetStatistics(context, name);
 		}
@@ -39,8 +40,7 @@ public:
 
 struct MooncakeMultiFileList : public MultiFileList {
 	MooncakeMultiFileList(MooncakeTable &_table)
-	    : MultiFileList(), table(_table), metadata(), data_files(),
-	      data_file_numbers() {
+	    : MultiFileList(), table(_table), metadata(), data_files(), data_file_numbers() {
 	}
 
 	// Lazily initialized because pg_duckdb binds each query three times
@@ -66,7 +66,8 @@ struct MooncakeMultiFileList : public MultiFileList {
 					}
 					auto &stats = file_stats->column_stats.at(bind_data.names[column_id]);
 					auto &filter = ExpressionFilter::GetExpressionFilter(entry.Filter(), "mooncake scan");
-					if (stats && filter.CheckStatistics(context, *stats) == FilterPropagateResult::FILTER_ALWAYS_FALSE) {
+					if (stats &&
+					    filter.CheckStatistics(context, *stats) == FilterPropagateResult::FILTER_ALWAYS_FALSE) {
 						skip_file = true;
 						break;
 					}
