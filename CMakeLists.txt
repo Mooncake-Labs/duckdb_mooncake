@@ -44,7 +44,7 @@ if(NOT roaring_FOUND)
     FetchContent_MakeAvailable(roaring)
 endif()
 
-corrosion_import_crate(MANIFEST_PATH moonlink_ffi/Cargo.toml)
+corrosion_import_crate(MANIFEST_PATH moonlink_ffi/Cargo.toml LOCKED)
 
 include_directories(
     src/include)
