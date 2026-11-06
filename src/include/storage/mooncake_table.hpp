@@ -14,6 +14,10 @@ public:
 
 	~MooncakeTable();
 
+	const ColumnList &GetColumns() const override {
+		return columns;
+	}
+
 	unique_ptr<BaseStatistics> GetStatistics(ClientContext &context, column_t column_id) override;
 
 	TableFunction GetScanFunction(ClientContext &context, unique_ptr<FunctionData> &bind_data) override;
@@ -23,6 +27,7 @@ public:
 	MooncakeTableMetadata &GetTableMetadata();
 
 private:
+	ColumnList columns;
 	uint64_t lsn;
 	Moonlink &moonlink;
 	mutex lock;

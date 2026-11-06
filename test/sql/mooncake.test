@@ -1,4 +1,8 @@
 # name: test/sql/mooncake.test
-# description: test mooncake extension
+# description: load the Mooncake extension against the supported DuckDB version
 # group: [sql]
 
+require mooncake
+
+statement ok
+LOAD mooncake;

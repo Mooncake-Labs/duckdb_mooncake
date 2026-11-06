@@ -17,7 +17,7 @@ SchemaCatalogEntry &MooncakeTransaction::GetOrCreateSchema(const string &name) {
 		return *it->second.get();
 	}
 	CreateSchemaInfo info;
-	info.schema = name;
+	info.SetSchema(Identifier(name));
 	schemas[name] = make_uniq<MooncakeSchema>(catalog, info, lsn);
 	return *schemas[name];
 }

@@ -76,7 +76,7 @@ optional_ptr<CatalogEntry> MooncakeSchema::LookupEntry(CatalogTransaction transa
 		return *it->second.get();
 	}
 
-	DataPtr data = moonlink.GetTableSchema(name, table_name);
+	DataPtr data = moonlink.GetTableSchema(name.GetIdentifierName(), table_name);
 	nanoarrow::ipc::UniqueDecoder decoder;
 	ArrowSchemaWrapper schema;
 	ArrowError error;
@@ -87,14 +87,14 @@ optional_ptr<CatalogEntry> MooncakeSchema::LookupEntry(CatalogTransaction transa
 	}
 
 	ArrowTableSchema arrow_table;
-	ArrowTableFunction::PopulateArrowTableSchema(transaction.db->config, arrow_table, schema.arrow_schema);
+	ArrowTableFunction::PopulateArrowTableSchema(transaction.GetContext(), arrow_table, schema.arrow_schema);
 	auto &names = arrow_table.GetNames();
 	auto &types = arrow_table.GetTypes();
 
 	CreateTableInfo table_info;
-	table_info.table = table_name;
+	table_info.SetTableName(Identifier(table_name));
 	for (idx_t i = 0; i < names.size(); i++) {
-		table_info.columns.AddColumn(ColumnDefinition(names[i], types[i]));
+		table_info.columns.AddColumn(ColumnDefinition(Identifier(names[i]), types[i]));
 	}
 	tables[table_name] = make_uniq<MooncakeTable>(catalog, *this, table_info, lsn, moonlink);
 	return *tables[table_name];

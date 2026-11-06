@@ -54,7 +54,7 @@ dependencies = [
 [[package]]
 name = "moonlink_error"
 version = "0.0.1"
-source = "git+https://github.com/Mooncake-labs/moonlink.git#c1a99ef01af878a5ffa77d1019ef4833a7907410"
+source = "git+https://github.com/Mooncake-labs/moonlink.git?rev=c1a99ef01af878a5ffa77d1019ef4833a7907410#c1a99ef01af878a5ffa77d1019ef4833a7907410"
 dependencies = [
  "anyhow",
  "bincode",
@@ -73,7 +73,7 @@ dependencies = [
 [[package]]
 name = "moonlink_rpc"
 version = "0.0.1"
-source = "git+https://github.com/Mooncake-labs/moonlink.git#c1a99ef01af878a5ffa77d1019ef4833a7907410"
+source = "git+https://github.com/Mooncake-labs/moonlink.git?rev=c1a99ef01af878a5ffa77d1019ef4833a7907410#c1a99ef01af878a5ffa77d1019ef4833a7907410"
 dependencies = [
  "bincode",
  "moonlink_error",

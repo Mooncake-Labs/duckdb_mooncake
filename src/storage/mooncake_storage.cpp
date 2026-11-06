@@ -1,3 +1,4 @@
+#include "duckdb/parser/parsed_data/attach_info.hpp"
 #include "storage/mooncake_catalog.hpp"
 #include "storage/mooncake_storage.hpp"
 #include "storage/mooncake_transaction_manager.hpp"
