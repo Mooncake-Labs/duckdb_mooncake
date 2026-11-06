@@ -9,7 +9,7 @@ void MooncakeExtension::Load(ExtensionLoader &loader) {
 	auto &db = loader.GetDatabaseInstance();
 	ExtensionHelper::AutoLoadExtension(db, "parquet");
 	auto &config = DBConfig::GetConfig(db);
-	config.storage_extensions["mooncake"] = make_uniq<MooncakeStorageExtension>();
+	StorageExtension::Register(config, "mooncake", make_shared_ptr<MooncakeStorageExtension>());
 
 	string init_query = Pgmooncake::GetInitQuery();
 	if (!init_query.empty()) {

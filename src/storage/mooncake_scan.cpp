@@ -1,7 +1,12 @@
 #include "duckdb/catalog/catalog_entry/table_function_catalog_entry.hpp"
 #include "duckdb/common/multi_file/multi_file_reader.hpp"
+#include "duckdb/common/multi_file/multi_file_function.hpp"
+#include "duckdb/main/extension/extension_loader.hpp"
 #include "duckdb/parser/tableref/table_function_ref.hpp"
-#include "parquet_reader.hpp"
+#include "duckdb/planner/filter/expression_filter.hpp"
+#include "duckdb/planner/table_filter_set.hpp"
+#include "duckdb/storage/object_cache.hpp"
+#include "duckdb/storage/statistics/base_statistics.hpp"
 #include "storage/mooncake_table.hpp"
 #include "storage/mooncake_table_metadata.hpp"
 
@@ -9,48 +14,64 @@ namespace duckdb {
 
 struct DataFileStatistics : public ObjectCacheEntry {
 public:
-	DataFileStatistics(ClientContext &context, string data_file, const vector<string> &names) : column_stats() {
-		ParquetReader reader(context, data_file, ParquetOptions(context));
-		for (auto &name : names) {
-			column_stats[name] = reader.ReadStatistics(name);
+	DataFileStatistics(ClientContext &context, const string &data_file, const MultiFileBindData &bind_data) {
+		auto options = bind_data.interface->InitializeOptions(context, nullptr);
+		auto reader = bind_data.interface->CreateReader(context, OpenFileInfo(data_file), *options, bind_data.file_options);
+		for (auto &name : bind_data.names) {
+			column_stats[name] = reader->GetStatistics(context, name);
 		}
 	}
 
 	static string ObjectType() {
-		return "data_file_statistics";
+		return "mooncake_data_file_statistics";
 	}
 
 	string GetObjectType() override {
 		return ObjectType();
 	}
 
-	unordered_map<string, unique_ptr<BaseStatistics>> column_stats;
-};
+	optional_idx GetEstimatedCacheMemory() const override {
+		return sizeof(*this) + column_stats.size() * (sizeof(BaseStatistics) + sizeof(Identifier) + 128);
+	}
 
-static ObjectCache mooncake_stats;
+	identifier_map_t<unique_ptr<BaseStatistics>> column_stats;
+};
 
 struct MooncakeMultiFileList : public MultiFileList {
 	MooncakeMultiFileList(MooncakeTable &_table)
-	    : MultiFileList({}, FileGlobOptions::ALLOW_EMPTY), table(_table), metadata(), data_files(),
+	    : MultiFileList(), table(_table), metadata(), data_files(),
 	      data_file_numbers() {
 	}
 
 	// Lazily initialized because pg_duckdb binds each query three times
-	void LazyInitialize(ClientContext &context, const vector<string> &names, const vector<column_t> &column_ids,
+	void LazyInitialize(ClientContext &context, const MultiFileBindData &bind_data, const vector<column_t> &column_ids,
 	                    optional_ptr<TableFilterSet> filters) {
 		metadata = &table.GetTableMetadata();
 		for (uint32_t data_file_number = 0; data_file_number < metadata->GetNumDataFiles(); data_file_number++) {
 			auto data_file = metadata->GetDataFile(data_file_number);
 			if (filters) {
-				auto file_stats = mooncake_stats.GetOrCreate<DataFileStatistics>(data_file, context, data_file, names);
-				auto skip_file = [&](auto &entry) {
-					if (IsVirtualColumn(column_ids[entry.first])) {
-						return false;
+				auto &cache = ObjectCache::GetObjectCache(context);
+				auto file_stats = cache.GetWithTypePrefix<DataFileStatistics>(data_file);
+				if (!file_stats) {
+					// Reading Parquet metadata also uses the object cache. Do not hold
+					// its mutex while constructing this entry via GetOrCreate.
+					file_stats = make_shared_ptr<DataFileStatistics>(context, data_file, bind_data);
+					cache.PutWithTypePrefix<DataFileStatistics>(data_file, file_stats);
+				}
+				bool skip_file = false;
+				for (auto &entry : *filters) {
+					auto column_id = column_ids[entry.GetIndex().GetIndex()];
+					if (IsVirtualColumn(column_id)) {
+						continue;
 					}
-					auto &stats = file_stats->column_stats.at(names[column_ids[entry.first]]);
-					return stats && entry.second->CheckStatistics(*stats) == FilterPropagateResult::FILTER_ALWAYS_FALSE;
-				};
-				if (any_of(filters->filters.begin(), filters->filters.end(), skip_file)) {
+					auto &stats = file_stats->column_stats.at(bind_data.names[column_id]);
+					auto &filter = ExpressionFilter::GetExpressionFilter(entry.Filter(), "mooncake scan");
+					if (stats && filter.CheckStatistics(context, *stats) == FilterPropagateResult::FILTER_ALWAYS_FALSE) {
+						skip_file = true;
+						break;
+					}
+				}
+				if (skip_file) {
 					continue;
 				}
 			}
@@ -59,24 +80,24 @@ struct MooncakeMultiFileList : public MultiFileList {
 		}
 	}
 
-	vector<OpenFileInfo> GetAllFiles() override {
+	vector<OpenFileInfo> GetAllFiles() const override {
 		return data_files;
 	}
 
-	FileExpandResult GetExpandResult() override {
+	FileExpandResult GetExpandResult() const override {
 		return FileExpandResult::MULTIPLE_FILES;
 	}
 
-	idx_t GetTotalFileCount() override {
+	idx_t GetTotalFileCount() const override {
 		return data_files.size();
 	}
 
-	unique_ptr<MultiFileList> Copy() override {
+	unique_ptr<MultiFileList> Copy() const override {
 		D_ASSERT(data_files.empty());
 		return make_uniq<MooncakeMultiFileList>(table);
 	}
 
-	OpenFileInfo GetFile(idx_t i) override {
+	OpenFileInfo GetFile(idx_t i) const override {
 		return i < data_files.size() ? data_files[i] : OpenFileInfo();
 	}
 
@@ -101,7 +122,7 @@ struct MooncakeMultiFileReader : public MultiFileReader {
 	MooncakeMultiFileReader(MooncakeTable &_table) : table(_table) {
 	}
 
-	static unique_ptr<MultiFileReader> Create(const TableFunction &table_function) {
+	static unique_ptr<MultiFileReader> Create(const BoundTableFunction &table_function) {
 		return make_uniq<MooncakeMultiFileReader>(table_function.function_info->Cast<MooncakeFunctionInfo>().table);
 	}
 
@@ -109,7 +130,15 @@ struct MooncakeMultiFileReader : public MultiFileReader {
 		return make_shared_ptr<MooncakeMultiFileList>(table);
 	}
 
-	bool Bind(MultiFileOptions &, MultiFileList &, vector<LogicalType> &return_types, vector<string> &names,
+	shared_ptr<MultiFileList> CreateFileList(ClientContext &, vector<OpenFileInfo>, const FileGlobInput &) override {
+		return make_shared_ptr<MooncakeMultiFileList>(table);
+	}
+
+	unique_ptr<MultiFileReader> Copy() const override {
+		return make_uniq<MooncakeMultiFileReader>(table);
+	}
+
+	bool Bind(MultiFileOptions &, MultiFileList &, vector<LogicalType> &return_types, vector<Identifier> &names,
 	          MultiFileReaderBindData &) override {
 		for (auto &column : table.GetColumns().Logical()) {
 			return_types.emplace_back(column.GetType());
@@ -133,27 +162,27 @@ struct MooncakeMultiFileReader : public MultiFileReader {
 	MooncakeTable &table;
 };
 
-static TableFunction &GetParquetScan(ClientContext &context) {
+static TableFunction GetParquetScan(ClientContext &context) {
 	ExtensionLoader loader(*context.db, "mooncake");
-	return loader.GetTableFunction("parquet_scan").functions.GetFunctionReferenceByOffset(0);
+	return *loader.GetTableFunction("parquet_scan").functions.GetFunctionByOffset(0);
 }
 
 static unique_ptr<GlobalTableFunctionState> MooncakeScanInitGlobal(ClientContext &context,
                                                                    TableFunctionInitInput &input) {
 	auto &bind_data = input.bind_data->Cast<MultiFileBindData>();
-	bind_data.file_list->Cast<MooncakeMultiFileList>().LazyInitialize(context, bind_data.names, input.column_ids,
+	bind_data.file_list->Cast<MooncakeMultiFileList>().LazyInitialize(context, bind_data, input.column_ids,
 	                                                                  input.filters);
 	return GetParquetScan(context).init_global(context, input);
 }
 
 static InsertionOrderPreservingMap<string> MooncakeScanToString(TableFunctionToStringInput &input) {
 	InsertionOrderPreservingMap<string> result;
-	result["Table"] = input.table_function.function_info->Cast<MooncakeFunctionInfo>().table.name;
+	result["Table"] = input.table_function.function_info->Cast<MooncakeFunctionInfo>().table.name.GetIdentifierName();
 	return result;
 }
 
-static BindInfo MooncakeScanGetBindInfo(const optional_ptr<FunctionData> bind_data) {
-	return BindInfo(bind_data->Cast<MultiFileBindData>().file_list->Cast<MooncakeMultiFileList>().table);
+static BindInfo MooncakeScanGetBindInfo(TableFunctionGetBindInfoInput &input) {
+	return BindInfo(ScanType::EXTERNAL);
 }
 
 TableFunction MooncakeTable::GetScanFunction(ClientContext &context, unique_ptr<FunctionData> &bind_data) {
@@ -165,13 +194,14 @@ TableFunction MooncakeTable::GetScanFunction(ClientContext &context, unique_ptr<
 	mooncake_scan.get_multi_file_reader = MooncakeMultiFileReader::Create;
 	mooncake_scan.function_info = make_shared_ptr<MooncakeFunctionInfo>(*this);
 	vector<Value> inputs {""};
-	named_parameter_map_t named_parameters;
+	named_argument_map_t named_parameters;
 	vector<LogicalType> input_table_types;
-	vector<string> input_table_names;
+	vector<Identifier> input_table_names;
+	BoundTableFunction bound_function(mooncake_scan);
 	TableFunctionBindInput bind_input(inputs, named_parameters, input_table_types, input_table_names, nullptr /*info*/,
-	                                  nullptr /*binder*/, mooncake_scan, {} /*ref*/);
+	                                  nullptr /*binder*/, bound_function, {} /*ref*/);
 	vector<LogicalType> return_types;
-	vector<string> names;
+	vector<Identifier> names;
 	bind_data = mooncake_scan.bind(context, bind_input, return_types, names);
 	return mooncake_scan;
 }

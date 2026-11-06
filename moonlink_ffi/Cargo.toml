@@ -7,5 +7,5 @@ edition = "2021"
 crate-type = ["staticlib"]
 
 [dependencies]
-moonlink_rpc.git = "https://github.com/Mooncake-labs/moonlink.git"
+moonlink_rpc = { git = "https://github.com/Mooncake-labs/moonlink.git", rev = "c1a99ef01af878a5ffa77d1019ef4833a7907410" }
 tokio = { version = "1.48", features = ["net"] }

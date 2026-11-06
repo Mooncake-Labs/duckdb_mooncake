@@ -28,14 +28,25 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nanoarrow)
 
-find_package(roaring REQUIRED)
+find_package(roaring 4 CONFIG QUIET)
+if(NOT roaring_FOUND)
+    # Ubuntu 24.04 ships CRoaring 0.2, which lacks the bulk bitmap API.
+    set(ENABLE_ROARING_TESTS OFF CACHE BOOL "" FORCE)
+    set(ROARING_USE_CPM OFF CACHE BOOL "" FORCE)
+    set(ROARING_BUILD_STATIC ON CACHE BOOL "" FORCE)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    FetchContent_Declare(
+        roaring
+        URL "https://github.com/RoaringBitmap/CRoaring/archive/refs/tags/v5.5.4.tar.gz"
+        URL_HASH SHA256=b415800c3d59a3f56b52bc424e81a26383905d5d0e98186c62cfad32f9dc3bd6
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    FetchContent_MakeAvailable(roaring)
+endif()
 
 corrosion_import_crate(MANIFEST_PATH moonlink_ffi/Cargo.toml)
 
 include_directories(
-    duckdb/extension/parquet/include
-    duckdb/third_party/parquet
-    duckdb/third_party/thrift
     src/include)
 
 set(EXTENSION_SOURCES
